@@ -1,0 +1,24 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="100" cy="100" r="82" fill="none" stroke="#c1440e" stroke-width="16"/>
+
+  <!-- chapéu de chef -->
+  <rect x="72" y="18" width="56" height="34" rx="17" fill="#c1440e"/>
+  <rect x="78" y="48" width="44" height="11" rx="3" fill="#c1440e"/>
+
+  <!-- garfo e faca cruzados -->
+  <g stroke="#c1440e" stroke-linecap="round">
+    <line x1="55" y1="55" x2="145" y2="145" stroke-width="16"/>
+    <line x1="145" y1="55" x2="55" y2="145" stroke-width="16"/>
+    <!-- dentes do garfo -->
+    <line x1="55" y1="55" x2="45" y2="43" stroke-width="7"/>
+    <line x1="55" y1="55" x2="55" y2="39" stroke-width="7"/>
+    <line x1="55" y1="55" x2="65" y2="43" stroke-width="7"/>
+  </g>
+  <!-- ponta da faca -->
+  <polygon points="131,69 151,49 145,73" fill="#c1440e"/>
+
+  <!-- sacola de compras -->
+  <path fill="#c1440e" d="M78 148 h44 l5 30 a6 6 0 0 1 -6 7 h-42 a6 6 0 0 1 -6 -7 z"/>
+  <path fill="none" stroke="#c1440e" stroke-width="8" stroke-linecap="round"
+    d="M88 148 q0 -16 12 -16 q12 0 12 16"/>
+</svg>

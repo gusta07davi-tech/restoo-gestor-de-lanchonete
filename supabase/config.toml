@@ -1,0 +1,9 @@
+project_id = "gestor-lanchonete"
+
+# O primeiro cadastro precisa chegar ao handler sem uma sessao de usuario.
+# Depois dele, create-user exige um admin/dev autenticado no proprio handler.
+[functions.create-user]
+verify_jwt = false
+
+[functions.reset-password]
+verify_jwt = true
