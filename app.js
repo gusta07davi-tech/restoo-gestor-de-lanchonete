@@ -1972,7 +1972,9 @@ function renderGestaoUsuarios(){
       <td>${u.ativo!==false?'<span class="badge badge-success">Ativo</span>':'<span class="badge badge-neutral">Inativo</span>'}${u.id===usuarioLogado?.id?' <span class="badge badge-primary">Você</span>':''}</td>
       <td class="flex gap-2" style="flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm redefinirSenha" data-id="${u.id}">Redefinir senha</button>
-        ${u.id!==usuarioLogado?.id?`<button class="btn btn-secondary btn-sm toggleAtivoUsuario" data-id="${u.id}">${u.ativo!==false?'Desativar':'Reativar'}</button>`:''}
+        ${u.id!==usuarioLogado?.id?`<button class="btn btn-secondary btn-sm editarUsuario" data-id="${u.id}">Editar</button>
+        <button class="btn btn-secondary btn-sm toggleAtivoUsuario" data-id="${u.id}">${u.ativo!==false?'Desativar':'Reativar'}</button>
+        <button class="btn btn-danger btn-sm excluirUsuario" data-id="${u.id}">Excluir</button>`:''}
       </td>
     </tr>`).join('') || '<tr><td colspan="5"><p class="text-muted">Nenhum usuário operacional cadastrado.</p></td></tr>'}
     </tbody></table></div>
@@ -2041,6 +2043,45 @@ function ligarGestaoUsuarios(el){
     await carregarUsuarios();
     closeModal(); renderContent(); toast('Usuário '+(novoValor?'reativado':'desativado')+'.');
   }));
+  el.querySelectorAll('.editarUsuario').forEach(btn=>btn.addEventListener('click',()=>{
+    const u = state.usuarios.find(x=>x.id===btn.dataset.id);
+    // Conta de Desenvolvedor não muda de perfil por aqui (é uma categoria à parte, criada só
+    // pela tela de Acesso de Desenvolvedor) — edição fica restrita ao nome, sem dropdown.
+    const ehDev = u.perfil==='dev';
+    openModal('Editar Usuário — '+u.usuario, `
+      <div class="field"><label class="label">Nome</label><input class="input" id="euNome" value="${esc(u.nome||'')}"></div>
+      ${ehDev?'':`<div class="field"><label class="label">Perfil</label><select class="select" id="euPerfil">${Object.entries(PERFIS).filter(([k])=>k!=='dev').sort((a,b)=>b[1].nivel-a[1].nivel).map(([k,p])=>`<option value="${k}" ${k===u.perfil?'selected':''}>${esc(p.nome)}</option>`).join('')}</select></div>`}
+      <p class="text-error" id="euErro" style="font-size:var(--text-xs);min-height:1em"></p>
+    `, async ()=>{
+      const nome = document.getElementById('euNome').value.trim();
+      const perfil = ehDev ? 'dev' : document.getElementById('euPerfil').value;
+      const erroEl = document.getElementById('euErro');
+      if(!nome){ erroEl.textContent = 'Informe um nome.'; return; }
+      if(u.perfil==='admin' && perfil!=='admin'){
+        const outrosAdminsAtivos = state.usuarios.filter(x=>x.perfil==='admin' && x.ativo!==false && x.id!==u.id).length;
+        if(outrosAdminsAtivos===0){ erroEl.textContent = 'Não é possível remover o último Administrador ativo.'; return; }
+      }
+      const { error } = await supabaseClient.from('profiles').update({ nome, perfil }).eq('id', u.id);
+      if(error){ erroEl.textContent = error.message; return; }
+      registrarAuditoria('Edição de usuário: '+u.usuario, u.nome+' / '+PERFIS[u.perfil].nome, nome+' / '+PERFIS[perfil].nome);
+      await carregarUsuarios();
+      closeModal(); renderContent(); toast('Usuário atualizado.');
+    });
+  }));
+  el.querySelectorAll('.excluirUsuario').forEach(btn=>btn.addEventListener('click',()=>{
+    const u = state.usuarios.find(x=>x.id===btn.dataset.id);
+    openModal('Excluir Usuário — '+u.usuario, `
+      <p>Tem certeza que deseja excluir <strong>${esc(u.nome||u.usuario)}</strong> (${esc(u.usuario)})? Essa ação não pode ser desfeita — o login deixa de existir imediatamente. O histórico de Auditoria já registrado permanece.</p>
+      <p class="text-error" id="euxErro" style="font-size:var(--text-xs);min-height:1em"></p>
+    `, async ()=>{
+      const erroEl = document.getElementById('euxErro');
+      try{ await chamarFuncao('delete-user', { userId: u.id }); }
+      catch(e){ erroEl.textContent = e.message; return; }
+      registrarAuditoria('Exclusão de usuário: '+u.usuario, '', '');
+      await carregarUsuarios();
+      closeModal(); renderContent(); toast('Usuário excluído.');
+    });
+  }));
 }
 
 /* ---------- Acesso de Desenvolvedor (Administrador/Desenvolvedor) ----------
@@ -2060,7 +2101,9 @@ function renderAcessoDev(){
       <td>${u.ativo!==false?'<span class="badge badge-success">Ativo</span>':'<span class="badge badge-neutral">Inativo</span>'}${u.id===usuarioLogado?.id?' <span class="badge badge-primary">Você</span>':''}</td>
       <td class="flex gap-2" style="flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm redefinirSenha" data-id="${u.id}">Redefinir senha</button>
-        ${u.id!==usuarioLogado?.id?`<button class="btn btn-secondary btn-sm toggleAtivoUsuario" data-id="${u.id}">${u.ativo!==false?'Revogar':'Reativar'}</button>`:''}
+        ${u.id!==usuarioLogado?.id?`<button class="btn btn-secondary btn-sm editarUsuario" data-id="${u.id}">Editar</button>
+        <button class="btn btn-secondary btn-sm toggleAtivoUsuario" data-id="${u.id}">${u.ativo!==false?'Revogar':'Reativar'}</button>
+        <button class="btn btn-danger btn-sm excluirUsuario" data-id="${u.id}">Excluir</button>`:''}
       </td>
     </tr>`).join('')}
     </tbody></table></div>`}

@@ -61,6 +61,14 @@ do $$ begin
     raise exception 'FAIL: inactive cashier reactivated own account';
   end if;
 end $$;
+do $$ begin
+  begin
+    perform public.cancelar_receita_pedido(4242);
+  exception when raise_exception or insufficient_privilege then
+    return;
+  end;
+  raise exception 'FAIL: inactive cashier cancelled revenue';
+end $$;
 
 set local role anon;
 select set_config('request.jwt.claim.sub', '', true);
@@ -72,6 +80,14 @@ do $$ begin
     return;
   end;
   raise exception 'FAIL: anonymous caller renewed Premium';
+end $$;
+do $$ begin
+  begin
+    perform public.cancelar_receita_pedido(4242);
+  exception when raise_exception or insufficient_privilege then
+    return;
+  end;
+  raise exception 'FAIL: anonymous caller cancelled revenue';
 end $$;
 
 -- Confirmar/cancelar um pedido é um efeito automático da tela de Pedidos — precisa
@@ -160,4 +176,4 @@ end $$;
 
 reset role;
 rollback;
-select 'PASS: privilege metadata, profile RLS, repeated bootstrap, anonymous Premium renewal, and order-confirmation writes for Caixa/Cozinha' as result;
+select 'PASS: privilege metadata, profile RLS, repeated bootstrap, Premium, confirmation writes, Caixa revenue cancellation, anonymous/inactive cancellation denial; all fixtures rolled back' as result;

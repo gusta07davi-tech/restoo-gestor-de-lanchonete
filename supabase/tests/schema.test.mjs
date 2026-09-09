@@ -59,6 +59,8 @@ try {
   const result = await db.exec(await readFile(new URL('security.sql', import.meta.url), 'utf8'));
   console.log('PASS: schema executes; 28 RLS tables, 51 policies, 7 publication tables; first account forced to admin');
   console.log(result.at(-1).rows[0].result);
+  const cancellation = await db.exec(await readFile(new URL('order-cancellation.sql', import.meta.url), 'utf8'));
+  console.log(cancellation.at(-1).rows[0].result);
 } catch (error) {
   console.error(error.message);
   process.exitCode = 1;
