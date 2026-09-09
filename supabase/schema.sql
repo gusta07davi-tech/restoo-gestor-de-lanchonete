@@ -400,6 +400,26 @@ begin
 end;
 $$;
 
+-- Cancelamento de pedido precisa apagar a receita da venda ("Venda pedido #N") mesmo
+-- quando quem cancela é Caixa/Cozinha — que TÊM permissão de apagar (política de DELETE
+-- abaixo), mas NÃO têm permissão de SELECT em financeiro_receitas (só 'financeiro' vê essa
+-- lista). O Postgres, porém, exige que a linha também seja "visível" pela política de SELECT
+-- para conseguir localizá-la num DELETE, mesmo sem RETURNING — então uma política de DELETE
+-- sozinha não é suficiente aqui. Esta função SECURITY DEFINER resolve isso: confere a
+-- permissão 'pedidos' internamente e apaga a linha sem depender do SELECT do chamador.
+create or replace function public.cancelar_receita_pedido(p_numero int)
+returns void
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if public.perfil_tem('pedidos') is not true then
+    raise exception 'Sem permissão para cancelar a receita deste pedido.';
+  end if;
+  delete from public.financeiro_receitas where descricao = 'Venda pedido #'||p_numero;
+end;
+$$;
+grant execute on function public.cancelar_receita_pedido(int) to authenticated;
+
 -- ---------------------------------------------------------------------------
 -- 10. ROW LEVEL SECURITY
 -- ---------------------------------------------------------------------------

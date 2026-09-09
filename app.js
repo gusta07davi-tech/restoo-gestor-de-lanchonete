@@ -1489,10 +1489,12 @@ async function cancelarPedido(pedido){
       const venda = state.vendas.find(v=>v.pedidoId===pedido.id);
       if(venda){
         await supabaseClient.from('vendas').delete().eq('id', venda.id); // venda_itens cai junto (ON DELETE CASCADE)
-        // Apaga direto pela descrição (sem procurar em state.financeiro.receitas primeiro):
-        // Caixa/Cozinha têm permissão para apagar essa linha (efeito automático do cancelamento),
-        // mas não para LER a tabela financeiro_receitas — só quem tem 'financeiro' vê essa lista.
-        await supabaseClient.from('financeiro_receitas').delete().eq('descricao', 'Venda pedido #'+pedido.numero);
+        // Via RPC (não DELETE direto na tabela): Caixa/Cozinha têm permissão para apagar essa
+        // linha, mas não para LER financeiro_receitas (só quem tem 'financeiro' vê essa lista) —
+        // e o Postgres exige visibilidade de SELECT para localizar a linha num DELETE, mesmo sem
+        // .select() no client. A função cancelar_receita_pedido() contorna isso com segurança.
+        const { error: erroReceita } = await supabaseClient.rpc('cancelar_receita_pedido', { p_numero: pedido.numero });
+        if(erroReceita) console.error('Falha ao remover receita do pedido cancelado', erroReceita);
       }
     }
     await supabaseClient.from('pedidos').update({ status:'Cancelado' }).eq('id', pedido.id);

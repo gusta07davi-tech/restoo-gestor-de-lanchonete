@@ -97,7 +97,7 @@ do $$ begin
   if not found then raise exception 'FAIL: caixa could not update ingredientes during order confirmation'; end if;
   insert into public.movimentos_estoque (ingrediente_id, tipo, qtd, motivo) values ('11111111-1111-1111-1111-111111111111', 'saida', 1, 'teste');
   insert into public.clientes (nome, telefone) values ('Cliente Teste Caixa', '92900000001');
-  insert into public.financeiro_receitas (descricao, valor) values ('Venda pedido teste', 10);
+  insert into public.financeiro_receitas (descricao, valor) values ('Venda pedido #4242', 10);
   if (select count(*) from public.ingredientes) = 0 then raise exception 'FAIL: caixa cannot see ingredientes list'; end if;
 exception when insufficient_privilege then
   raise exception 'FAIL: caixa cannot confirm an order (stock/clients/revenue write blocked)';
@@ -110,6 +110,37 @@ do $$ begin
   end;
   raise exception 'FAIL: caixa created a coupon (marketing-only action)';
 end $$;
+-- Cancelar um pedido precisa apagar a receita mesmo sem SELECT em financeiro_receitas — uma
+-- política de DELETE sozinha não basta (Postgres exige visibilidade de SELECT para localizar
+-- a linha), por isso o apagamento passa pela função cancelar_receita_pedido(). Regressão do
+-- bug em que Caixa/Cozinha cancelavam o pedido, mas a receita ficava para trás.
+do $$ begin
+  perform public.cancelar_receita_pedido(4242);
+exception when others then
+  raise exception 'FAIL: caixa could not cancel the revenue row via cancelar_receita_pedido(): %', sqlerrm;
+end $$;
+-- Confere como postgres (ignora RLS) — caixa não tem SELECT em financeiro_receitas, então
+-- checar via caixa sempre daria "0 linhas visíveis" mesmo que o DELETE não tivesse ocorrido.
+reset role;
+do $$ begin
+  if (select count(*) from public.financeiro_receitas where descricao = 'Venda pedido #4242') <> 0 then
+    raise exception 'FAIL: cancelar_receita_pedido() did not actually delete the revenue row';
+  end if;
+end $$;
+set local role authenticated;
+-- Direto na tabela continua bloqueado para quem não tem 'financeiro' (defesa em profundidade —
+-- só a função acima, que confere a permissão internamente, pode apagar).
+do $$ begin
+  insert into public.financeiro_receitas (descricao, valor) values ('Venda pedido #4243', 10);
+  delete from public.financeiro_receitas where descricao = 'Venda pedido #4243';
+end $$;
+reset role;
+do $$ begin
+  if (select count(*) from public.financeiro_receitas where descricao = 'Venda pedido #4243') = 0 then
+    raise exception 'FAIL: caixa deleted a financeiro_receitas row directly (should only work via cancelar_receita_pedido)';
+  end if;
+end $$;
+set local role authenticated;
 
 select set_config('request.jwt.claim.sub', current_setting('test.cozinha_id'), true);
 do $$ begin
