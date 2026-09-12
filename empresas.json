@@ -1,0 +1,12 @@
+{
+  "_comentario": "Uma entrada por lanchonete. Cada uma precisa de um projeto Supabase PRÓPRIO (schema.sql rodado nele, Edge Functions publicadas nele) — nunca reaproveite a mesma URL/chave em duas entradas. Depois de editar este arquivo, rode: node scripts/gerar-empresas.mjs — e publique (git add/commit/push) normalmente.",
+  "empresas": [
+    {
+      "slug": "",
+      "root": true,
+      "nomeEmpresa": "Gestor Lanchonete",
+      "supabaseUrl": "https://umagdvslyanesszzuwhu.supabase.co",
+      "supabaseAnonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtYWdkdnNseWFuZXNzenp1d2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4NzA5ODEsImV4cCI6MjEwNDQ0Njk4MX0.ny3VN0AL3twJ__pcNcMsaDXBKJSF4Y872Tze1iSeU0w"
+    }
+  ]
+}

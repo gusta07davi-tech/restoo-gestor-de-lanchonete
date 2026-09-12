@@ -47,6 +47,7 @@ npx supabase login
 npx supabase link --project-ref SEU_PROJECT_REF
 npx supabase functions deploy create-user --use-api
 npx supabase functions deploy reset-password --use-api
+npx supabase functions deploy delete-user --use-api
 ```
 
 - `SEU_PROJECT_REF` está na URL do painel: `https://supabase.com/dashboard/project/SEU_PROJECT_REF`.

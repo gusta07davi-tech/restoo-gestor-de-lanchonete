@@ -6,8 +6,8 @@
 <!-- Este arquivo é GERADO por scripts/gerar-empresas.mjs a partir de index.template.html +
      empresas.json. Não edite index.html nem empresas/*/index.html diretamente — a próxima
      geração sobrescreve. Edite o template ou o manifesto e rode o script de novo. -->
-<title>Gestor Lanchonete — ERP Integrado</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg?v=1">
+<title>{{TITLE}} — ERP Integrado</title>
+<link rel="icon" type="image/svg+xml" href="{{ASSET_PREFIX}}favicon.svg?v=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,500,400&f[]=general-sans@400,500,600,700&display=swap" rel="stylesheet">
@@ -210,14 +210,8 @@ tr:hover td{background:var(--color-surface-offset);}
 <div id="authScreen"></div>
 <div class="toast-wrap" id="toastWrap"></div>
 <div class="modal-overlay" id="modalOverlay"><div class="modal" id="modalBox"></div></div>
-<script>
-window.SUPABASE_CONFIG = {
-  "url": "https://umagdvslyanesszzuwhu.supabase.co",
-  "anonKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtYWdkdnNseWFuZXNzenp1d2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4NzA5ODEsImV4cCI6MjEwNDQ0Njk4MX0.ny3VN0AL3twJ__pcNcMsaDXBKJSF4Y872Tze1iSeU0w",
-  "nomeEmpresa": "Gestor Lanchonete"
-};
-</script>
+{{CONFIG_SCRIPT}}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-<script src="app.js" defer></script>
+<script src="{{ASSET_PREFIX}}app.js" defer></script>
 </body>
 </html>

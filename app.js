@@ -69,12 +69,25 @@ const UNIT_FACTOR = {UN:1,KG:1000,G:1,L:1000,ML:1};
 function toBase(qty, unit){ return qty * (UNIT_FACTOR[unit]||1); }
 function baseUnitLabel(unit){ return UNIT_BASE[unit]||unit; }
 
-/* ---------- SUPABASE ---------- */
+/* ---------- SUPABASE ----------
+   Multiempresa: cada lanchonete tem seu PRÓPRIO projeto Supabase (isolamento total — nunca
+   dados de uma empresa ficam visíveis/alcançáveis pela outra, nem por bug de RLS). Este
+   app.js é compartilhado por todas; o que muda por empresa é só o window.SUPABASE_CONFIG,
+   declarado no <script> do index.html de cada uma (gerado por scripts/gerar-empresas.mjs a
+   partir de empresas.json — nunca edite os index.html das empresas à mão). */
+if(!window.SUPABASE_CONFIG || !window.SUPABASE_CONFIG.url || !window.SUPABASE_CONFIG.anonKey){
+  document.body.innerHTML = '<div style="max-width:520px;margin:15vh auto;padding:24px;font-family:sans-serif;text-align:center">'
+    + '<h1 style="color:#c1440e">Configuração ausente</h1>'
+    + '<p>Esta página não define <code>window.SUPABASE_CONFIG</code> — o app.js é compartilhado entre empresas e precisa desse bloco no HTML antes de carregar. Veja <code>scripts/gerar-empresas.mjs</code>.</p></div>';
+  throw new Error('SUPABASE_CONFIG ausente — veja empresas.json / scripts/gerar-empresas.mjs.');
+}
 // A chave abaixo é a "anon public" — pública por natureza, protegida pelas políticas de
-// RLS no banco (supabase/schema.sql), não por estar escondida. Nunca coloque a chave
-// service_role aqui: ela dá acesso total ao banco, ignorando toda regra de segurança.
-const SUPABASE_URL = 'https://umagdvslyanesszzuwhu.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtYWdkdnNseWFuZXNzenp1d2h1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4NzA5ODEsImV4cCI6MjEwNDQ0Njk4MX0.ny3VN0AL3twJ__pcNcMsaDXBKJSF4Y872Tze1iSeU0w';
+// RLS no banco (supabase/schema.sql) de CADA projeto, não por estar escondida. Nunca coloque
+// a chave service_role aqui: ela dá acesso total ao banco, ignorando toda regra de segurança.
+const SUPABASE_URL = window.SUPABASE_CONFIG.url;
+const SUPABASE_ANON_KEY = window.SUPABASE_CONFIG.anonKey;
+const NOME_EMPRESA = window.SUPABASE_CONFIG.nomeEmpresa || 'Gestor Lanchonete';
+document.title = NOME_EMPRESA + ' — ERP Integrado'; // distingue as abas quando há várias empresas abertas
 const EMAIL_DOMAIN = 'usuarios.gestorlanchonete.local';
 // Nome "supabaseClient" (não "supabase") de propósito: o script da CDN já expõe um
 // global window.supabase — declarar "const supabase" colidiria com ele.
@@ -443,7 +456,7 @@ function logoSvg(){
 
 function renderSetupInicial(el){
   el.innerHTML = `<div class="auth-wrap"><div class="card auth-card">
-    <div class="auth-logo">${logoSvg()}<h1>Gestor Lanchonete</h1></div>
+    <div class="auth-logo">${logoSvg()}<h1>${esc(NOME_EMPRESA)}</h1></div>
     <h2 class="mb-2" style="font-size:var(--text-lg)">Configuração inicial</h2>
     <p class="text-muted mb-4" style="font-size:var(--text-sm)">Nenhum usuário cadastrado ainda. Crie a primeira conta — ela será o Administrador do sistema.</p>
     <div class="field"><label class="label">Nome</label><input class="input" id="setupNome" autocomplete="name"></div>
@@ -486,7 +499,7 @@ function renderSetupInicial(el){
 
 function renderLogin(el){
   el.innerHTML = `<div class="auth-wrap"><div class="card auth-card">
-    <div class="auth-logo">${logoSvg()}<h1>Gestor Lanchonete</h1></div>
+    <div class="auth-logo">${logoSvg()}<h1>${esc(NOME_EMPRESA)}</h1></div>
     <h2 class="mb-4" style="font-size:var(--text-lg)">Entrar</h2>
     <div class="field"><label class="label">Usuário</label><input class="input" id="loginUsuario" autocomplete="username"></div>
     <div class="field"><label class="label">Senha</label><input class="input" type="password" id="loginSenha" autocomplete="current-password"></div>
@@ -651,12 +664,12 @@ let dashPeriodo = 'hoje';
 function renderSidebar(){
   const sb = document.getElementById('sidebar');
   let html = `<div class="sidebar-brand">
-    <svg viewBox="0 0 40 40" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" aria-label="Logo Gestor Lanchonete">
+    <svg viewBox="0 0 40 40" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" aria-label="Logo ${esc(NOME_EMPRESA)}">
       <circle cx="20" cy="20" r="17" stroke="var(--color-primary)"/>
       <path d="M11 17h18M11 23h18" stroke="var(--color-primary)"/>
       <path d="M14 17c0-4 12-4 12 0" stroke="var(--color-primary)"/>
     </svg>
-    <h1>Gestor Lanchonete</h1>
+    <h1>${esc(NOME_EMPRESA)}</h1>
   </div>`;
   NAV.forEach(g=>{
     const visiveis = g.items.filter(it=> !it.perm || can(it.perm));
